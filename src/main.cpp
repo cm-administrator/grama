@@ -50,6 +50,10 @@ const int PASSO_SOFT_START_SUBIDA = 1;
 
 const float ALFA_FILTRO = 0.15f;
 
+// Ganho e duty mínimo para compensar diferenças entre os lados
+const CalibracaoDuty CALIBRACAO_MOTOR1 = {1.05f, 1.05f, 40, 40};
+const CalibracaoDuty CALIBRACAO_MOTOR2 = {1.00f, 1.00f, 40, 40};
+
 // =======================
 // INSTÂNCIAS (objetos)
 // =======================
@@ -79,7 +83,9 @@ ControleReversao controle(
     ABS_TOTAL_MS, ABS_ON_MS, ABS_OFF_MS,
     PASSO_RAMPA_SUBIDA, PASSO_RAMPA_DESCIDA,
     LIMIAR_TROCA_DIR_DUTY, DUTY_MAXIMO,
-    SOFT_START_MS, PASSO_SOFT_START_SUBIDA);
+    SOFT_START_MS, PASSO_SOFT_START_SUBIDA,
+    NIVEL_DIR_FRENTE_MOTOR1, NIVEL_DIR_FRENTE_MOTOR2,
+    CALIBRACAO_MOTOR1, CALIBRACAO_MOTOR2);
 
 void setup()
 {

@@ -9,6 +9,14 @@ struct DadosControleReversao
     bool direcaoAplicadaMotor2;
 };
 
+struct CalibracaoDuty
+{
+    float ganhoFrente;
+    float ganhoRe;
+    int dutyMinFrente;
+    int dutyMinRe;
+};
+
 class ControleReversao
 {
 public:
@@ -34,6 +42,11 @@ private:
     const int passoDescida;
     const int limiarTrocaDirDuty;
     const int dutyMax;
+    const bool nivelDirFrenteMotor1;
+    const bool nivelDirFrenteMotor2;
+
+    CalibracaoDuty calibMotor1;
+    CalibracaoDuty calibMotor2;
 
     // soft-start
     bool softStartAtivo;
@@ -59,12 +72,16 @@ public:
                      unsigned long absTotalMs_, unsigned long absOnMs_, unsigned long absOffMs_,
                      int passoSubida_, int passoDescida_,
                      int limiarTrocaDirDuty_, int dutyMax_,
-                     unsigned long softStartDuracaoMs_, int passoSoftStartSubida_)
+                     unsigned long softStartDuracaoMs_, int passoSoftStartSubida_,
+                     bool nivelDirFrenteMotor1_, bool nivelDirFrenteMotor2_,
+                     CalibracaoDuty calibMotor1_, CalibracaoDuty calibMotor2_)
         : driver(driver_),
           deadAntesMs(deadAntesMs_), deadDepoisMs(deadDepoisMs_),
           absTotalMs(absTotalMs_), absOnMs(absOnMs_), absOffMs(absOffMs_),
           passoSubida(passoSubida_), passoDescida(passoDescida_),
           limiarTrocaDirDuty(limiarTrocaDirDuty_), dutyMax(dutyMax_),
+          nivelDirFrenteMotor1(nivelDirFrenteMotor1_), nivelDirFrenteMotor2(nivelDirFrenteMotor2_),
+          calibMotor1(calibMotor1_), calibMotor2(calibMotor2_),
           softStartAtivo(false), softStartInicioMs(0),
           softStartDuracaoMs(softStartDuracaoMs_), passoSoftStartSubida(passoSoftStartSubida_),
           estado(RODANDO), dutyAplicado(0), direcaoAplicadaMotor1(LOW), direcaoAplicadaMotor2(HIGH),
@@ -155,7 +172,9 @@ public:
             dutyAplicado = constrain(dutyAplicado, 0, dutyMax);
 
             driver.setDirecao(direcaoAplicadaMotor1, direcaoAplicadaMotor2);
-            driver.setDuty(dutyAplicado);
+            driver.setDuty(
+                aplicarCalibracao(dutyAplicado, direcaoAplicadaMotor1, calibMotor1, nivelDirFrenteMotor1),
+                aplicarCalibracao(dutyAplicado, direcaoAplicadaMotor2, calibMotor2, nivelDirFrenteMotor2));
             break;
         }
 
@@ -217,6 +236,21 @@ public:
             break;
         }
         }
+    }
+
+    int aplicarCalibracao(int dutyBase, bool direcaoAtual, const CalibracaoDuty &calib, bool nivelDirFrenteMotor) const
+    {
+        const bool indoPraFrente = direcaoAtual == nivelDirFrenteMotor;
+        const float ganho = indoPraFrente ? calib.ganhoFrente : calib.ganhoRe;
+        const int dutyMin = indoPraFrente ? calib.dutyMinFrente : calib.dutyMinRe;
+
+        int dutyAjustado = (int)(dutyBase * ganho + 0.5f);
+        if (dutyAjustado > 0 && dutyAjustado < dutyMin)
+        {
+            dutyAjustado = dutyMin;
+        }
+
+        return constrain(dutyAjustado, 0, dutyMax);
     }
 
     Estado getEstado() const { return estado; }
