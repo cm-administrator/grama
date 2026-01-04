@@ -67,8 +67,13 @@ public:
 
     void setDuty(int duty)
     {
-        analogWrite(pwm1, duty);
-        analogWrite(pwm2, duty);
+        setDuty(duty, duty);
+    }
+
+    void setDuty(int dutyMotor1, int dutyMotor2)
+    {
+        analogWrite(pwm1, dutyMotor1);
+        analogWrite(pwm2, dutyMotor2);
     }
 
     void pararTudo()
